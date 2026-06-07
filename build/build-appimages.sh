@@ -44,6 +44,16 @@ build_one() {
       https://github.com/AppImage/appimagetool/releases/download/continuous/${aitool}
     chmod +x /root/bin/appimagetool
     go install github.com/wailsapp/wails/v2/cmd/wails@latest
+    # Wails injects the x86-only '-m64' into the CGO compile; aarch64 gcc rejects
+    # it ('unrecognized command-line option -m64'). Wrap CC to drop it — a no-op
+    # on amd64, the fix on arm64. CGO honours \$CC, so wails' go build picks it up.
+    cat > /usr/local/bin/cc-nofm64 <<'WRAP'
+#!/usr/bin/env bash
+args=(); for a in \"\$@\"; do [[ \"\$a\" == -m64 ]] || args+=(\"\$a\"); done
+exec gcc \"\${args[@]}\"
+WRAP
+    chmod +x /usr/local/bin/cc-nofm64
+    export CC=/usr/local/bin/cc-nofm64
     mkdir -p /work && cd /work
     git clone -q https://github.com/PharosVPN/caravel.git
     git clone -q -b '${BRANCH}' '${REPO}' caravel-linux

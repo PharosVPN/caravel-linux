@@ -37,6 +37,11 @@ type App struct {
 // NewApp builds the GUI backend.
 func NewApp() *App { return &App{} }
 
+// Version returns the app version (baked from the repo-root VERSION file), for
+// the About line + diagnostics. The bundled caravel core reports its own version
+// separately (caravel/go: CoreVersion).
+func (a *App) Version() string { return strings.TrimSpace(version) }
+
 // startup wires the Wails context and starts the background pollers (live tunnel
 // state every 2s; controller liveness every 30s — gentle, per the contract).
 func (a *App) startup(ctx context.Context) {

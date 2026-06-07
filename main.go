@@ -23,6 +23,13 @@ var assets embed.FS
 //go:embed build/appicon.png
 var icon []byte
 
+// version is the app version, baked from the repo-root VERSION file at build
+// time (fleet convention; matches caravel core's //go:embed VERSION). Surfaced
+// to the UI via App.Version().
+//
+//go:embed VERSION
+var version string
+
 func main() {
 	app := NewApp()
 
