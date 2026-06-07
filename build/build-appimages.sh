@@ -25,10 +25,10 @@ BRANCH="${BRANCH:-feat/linux-client-scaffold}"
 ARCHES="${ARCHES:-amd64 arm64}"
 
 build_one() {
-  local goarch="$1" gotar aitool platform
+  local goarch="$1" gotar aitool aiarch platform
   case "$goarch" in
-    amd64) platform=linux/amd64; gotar=go1.26.3.linux-amd64.tar.gz; aitool=appimagetool-x86_64.AppImage ;;
-    arm64) platform=linux/arm64; gotar=go1.26.3.linux-arm64.tar.gz; aitool=appimagetool-aarch64.AppImage ;;
+    amd64) platform=linux/amd64; gotar=go1.26.3.linux-amd64.tar.gz; aitool=appimagetool-x86_64.AppImage;  aiarch=x86_64 ;;
+    arm64) platform=linux/arm64; gotar=go1.26.3.linux-arm64.tar.gz; aitool=appimagetool-aarch64.AppImage; aiarch=aarch64 ;;
     *) echo "unknown arch $goarch" >&2; return 1 ;;
   esac
   echo "==> $platform"
@@ -44,21 +44,14 @@ build_one() {
       https://github.com/AppImage/appimagetool/releases/download/continuous/${aitool}
     chmod +x /root/bin/appimagetool
     go install github.com/wailsapp/wails/v2/cmd/wails@latest
-    # Wails injects the x86-only '-m64' into the CGO compile; aarch64 gcc rejects
-    # it ('unrecognized command-line option -m64'). Wrap CC to drop it — a no-op
-    # on amd64, the fix on arm64. CGO honours \$CC, so wails' go build picks it up.
-    cat > /usr/local/bin/cc-nofm64 <<'WRAP'
-#!/usr/bin/env bash
-args=(); for a in \"\$@\"; do [[ \"\$a\" == -m64 ]] || args+=(\"\$a\"); done
-exec gcc \"\${args[@]}\"
-WRAP
-    chmod +x /usr/local/bin/cc-nofm64
-    export CC=/usr/local/bin/cc-nofm64
     mkdir -p /work && cd /work
     git clone -q https://github.com/PharosVPN/caravel.git
     git clone -q -b '${BRANCH}' '${REPO}' caravel-linux
     cd caravel-linux
-    WAILS_TAGS=webkit2_41 ./build/appimage.sh
+    # Tell appimage.sh which arch to build for. It otherwise defaults ARCH=x86_64,
+    # which inside this native arm64 container would (cross-)build amd64 with the
+    # aarch64 gcc and fail on x86 cgo assembly (gcc_amd64.S). Build native per arch.
+    ARCH=${aiarch} WAILS_TAGS=webkit2_41 ./build/appimage.sh
     cp dist/*.AppImage /out/
   "
 }
