@@ -1,0 +1,17 @@
+{
+  "$schema": "https://wails.io/schemas/config.v2.json",
+  "name": "caravel-linux",
+  "outputfilename": "caravel-linux",
+  "frontend:install": "npm install",
+  "frontend:build": "npm run build",
+  "frontend:dev:watcher": "npm run dev",
+  "frontend:dev:serverUrl": "auto",
+  "author": {
+    "name": "The PharosVPN Authors"
+  },
+  "info": {
+    "productName": "PharosVPN",
+    "productIdentifier": "org.pharosvpn.caravel",
+    "comments": "PharosVPN desktop client for Linux"
+  }
+}

@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Name=PharosVPN
+GenericName=VPN Client
+Comment=Self-hostable dual-protocol VPN client
+Exec=PharosVPN
+Icon=pharosvpn
+Terminal=false
+Categories=Network;Security;
+Keywords=VPN;AmneziaWG;WireGuard;XRay;REALITY;privacy;
+StartupWMClass=PharosVPN

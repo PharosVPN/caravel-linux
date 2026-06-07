@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- SPDX-License-Identifier: Apache-2.0 -->
+<!-- Copyright (C) 2026 The PharosVPN Authors -->
+<!--
+  Polkit policy for installing the PharosVPN privileged helper. The GUI calls
+  `pkexec pharos-helper install` once; this rule presents a friendly prompt and
+  lets the local active user authorize it. After install, connect/disconnect go
+  over the helper's control socket with no further prompt — the same "authorize
+  once" model as the macOS LaunchDaemon.
+
+  Install to: /usr/share/polkit-1/actions/org.pharosvpn.caravel.policy
+-->
+<!DOCTYPE policyconfig PUBLIC
+ "-//freedesktop//DTD PolicyKit Policy Configuration 1.0//EN"
+ "http://www.freedesktop.org/standards/PolicyKit/1.0/policyconfig.dtd">
+<policyconfig>
+  <vendor>PharosVPN</vendor>
+  <vendor_url>https://github.com/PharosVPN</vendor_url>
+
+  <action id="org.pharosvpn.caravel.install-helper">
+    <description>Install the PharosVPN tunnel helper</description>
+    <message>Authentication is required to set up the PharosVPN tunnel.</message>
+    <defaults>
+      <allow_any>auth_admin</allow_any>
+      <allow_inactive>auth_admin</allow_inactive>
+      <allow_active>auth_admin_keep</allow_active>
+    </defaults>
+    <annotate key="org.freedesktop.policykit.exec.path">/usr/local/lib/pharosvpn/pharos-helper</annotate>
+    <annotate key="org.freedesktop.policykit.exec.allow_gui">true</annotate>
+  </action>
+</policyconfig>

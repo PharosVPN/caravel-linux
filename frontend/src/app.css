@@ -1,0 +1,228 @@
+/* SPDX-License-Identifier: Apache-2.0
+   Copyright (C) 2026 The PharosVPN Authors
+
+   caravel-linux design tokens — the coxswain web design system (helm/web app.css)
+   distilled to what the client needs, plus the brand maroon/cream and the
+   data/control route hues that match the macOS LandMap. Dark by default. */
+
+:root {
+	/* grays (coxswain dark scale) */
+	--c-gray-50: #e6e8ea;
+	--c-gray-100: #c0c4c6;
+	--c-gray-200: #a8acae;
+	--c-gray-300: #8a8e90;
+	--c-gray-400: #707578;
+	--c-gray-500: #5c6062;
+	--c-gray-600: #44494c;
+	--c-gray-700: #2d3438;
+	--c-gray-800: #2d3539;
+	--c-gray-850: #262e32;
+	--c-gray-900: #1f2528;
+	--c-gray-925: #1a2024;
+	--c-gray-950: #131618;
+	--c-gray-975: #0e1112;
+
+	/* brand — teal accent (matches mac app + coxswain) */
+	--c-brand-100: #4fd1c4;
+	--c-brand-200: #5bb1c2;
+	--c-brand-400: #3a9aae;
+	--c-primary: #2a8090;
+	--c-primary-hover: #3a9aae;
+	--c-on-primary: #edf7fa;
+
+	/* PharosVPN brand colours */
+	--c-maroon: #5a1f2b;
+	--c-cream: #f4ebdd;
+
+	/* status */
+	--c-success: #4fb87e;
+	--c-success-surface: #133024;
+	--c-danger: #e75d5d;
+	--c-danger-surface: #2d1818;
+	--c-warning: #c8943a;
+
+	/* route hues — data plane teal, control plane violet (DESIGN §3) */
+	--c-route-data: #4fd1c4;
+	--c-route-control: #b39cff;
+
+	--hover-overlay: rgba(79, 209, 196, 0.12);
+	--shadow-card: 0 8px 24px rgba(0, 0, 0, 0.4);
+
+	color-scheme: dark;
+}
+
+* {
+	box-sizing: border-box;
+}
+
+html,
+body {
+	margin: 0;
+	height: 100%;
+}
+
+body {
+	background: var(--c-gray-950);
+	color: var(--c-gray-50);
+	font-family: 'Cairo', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+	-webkit-font-smoothing: antialiased;
+	overflow: hidden;
+	user-select: none;
+}
+
+#app {
+	height: 100vh;
+}
+
+:focus-visible {
+	outline: 2px solid var(--c-brand-400);
+	outline-offset: 2px;
+	border-radius: 6px;
+}
+
+.tnum {
+	font-variant-numeric: tabular-nums;
+}
+
+/* ───────── buttons ───────── */
+.btn {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 8px;
+	font: inherit;
+	font-size: 14px;
+	font-weight: 600;
+	min-height: 40px;
+	padding: 9px 18px;
+	border-radius: 11px;
+	border: none;
+	cursor: pointer;
+	transition: all 0.15s ease;
+	color: var(--c-on-primary);
+}
+.btn:disabled {
+	background: var(--c-gray-700);
+	color: var(--c-gray-500);
+	cursor: not-allowed;
+}
+.btn-primary {
+	background: var(--c-primary);
+}
+.btn-primary:hover:not(:disabled) {
+	background: var(--c-primary-hover);
+}
+.btn-danger {
+	background: var(--c-danger);
+	color: #fff;
+}
+.btn-danger:hover:not(:disabled) {
+	opacity: 0.9;
+}
+.btn-text {
+	background: transparent;
+	color: var(--c-brand-200);
+	min-height: 32px;
+	padding: 6px 10px;
+	font-size: 13px;
+	font-weight: 600;
+}
+.btn-text:hover:not(:disabled) {
+	background: var(--hover-overlay);
+}
+.icon-btn {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 30px;
+	height: 30px;
+	border-radius: 8px;
+	background: transparent;
+	border: none;
+	color: var(--c-gray-200);
+	cursor: pointer;
+}
+.icon-btn:hover:not(:disabled) {
+	background: var(--hover-overlay);
+	color: var(--c-brand-100);
+}
+.icon-btn:disabled {
+	color: var(--c-gray-600);
+	cursor: not-allowed;
+}
+
+/* ───────── inputs ───────── */
+.input {
+	width: 100%;
+	font: inherit;
+	font-size: 14px;
+	background: var(--c-gray-925);
+	color: var(--c-gray-50);
+	border: 1px solid var(--c-gray-700);
+	border-radius: 10px;
+	padding: 10px 13px;
+}
+.input::placeholder {
+	color: var(--c-gray-400);
+}
+.input:focus {
+	outline: none;
+	border-color: var(--c-brand-400);
+}
+
+/* ───────── chips / badges ───────── */
+.badge {
+	display: inline-flex;
+	align-items: center;
+	font-size: 10px;
+	font-weight: 700;
+	padding: 2px 7px;
+	border-radius: 999px;
+	background: rgba(79, 209, 196, 0.15);
+	color: var(--c-brand-100);
+	letter-spacing: 0.02em;
+}
+.overline {
+	font-size: 11px;
+	font-weight: 700;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+	color: var(--c-gray-300);
+}
+
+/* ───────── animations ───────── */
+@keyframes pulseDot {
+	0%,
+	100% {
+		opacity: 1;
+	}
+	50% {
+		opacity: 0.45;
+	}
+}
+@keyframes spin {
+	to {
+		transform: rotate(360deg);
+	}
+}
+
+/* scrollbars */
+::-webkit-scrollbar {
+	width: 9px;
+}
+::-webkit-scrollbar-thumb {
+	background: var(--c-gray-700);
+	border-radius: 9px;
+}
+::-webkit-scrollbar-thumb:hover {
+	background: var(--c-gray-600);
+}
+
+@media (prefers-reduced-motion: reduce) {
+	*,
+	*::before,
+	*::after {
+		animation-duration: 0.01ms !important;
+		transition-duration: 0.01ms !important;
+	}
+}
