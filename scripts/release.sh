@@ -19,14 +19,14 @@ if gh release view "$TAG" >/dev/null 2>&1; then
   exit 1
 fi
 
-echo "==> Building both-arch AppImages for $TAG…"
+echo "==> Building both-arch AppImages for ${TAG}…"
 BRANCH="${BRANCH:-main}" ARCHES="amd64 arm64" ./build/build-appimages.sh
 
 amd64="dist/PharosVPN-x86_64.AppImage"
 arm64="dist/PharosVPN-aarch64.AppImage"
 [ -f "$amd64" ] && [ -f "$arm64" ] || { echo "!! missing AppImage(s) in dist/ — aborting release" >&2; exit 1; }
 
-echo "==> Publishing GitHub release $TAG…"
+echo "==> Publishing GitHub release ${TAG}…"
 gh release create "$TAG" "$amd64" "$arm64" \
   --title "PharosVPN Linux $TAG" \
   --notes "First public build (pre-alpha). PharosVPN desktop client for Linux (Wails GUI). Dual-arch AppImages: x86_64 + aarch64. Dual-protocol AmneziaWG + XRay-REALITY with cloud profile sync and the signature live map. Bundles caravel core v$VERSION. To run: \`chmod +x PharosVPN-*.AppImage\` and launch it; the privileged tunnel helper installs on first connect via pkexec."
