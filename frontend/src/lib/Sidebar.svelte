@@ -70,6 +70,14 @@
 			>
 				<Icon name="cloud-down" size={16} />
 			</button>
+			<button
+				class="icon-btn"
+				title="Enroll a device with a join link"
+				disabled={busy}
+				on:click={() => dispatch('enroll')}
+			>
+				<Icon name="link" size={16} />
+			</button>
 		</div>
 	</div>
 

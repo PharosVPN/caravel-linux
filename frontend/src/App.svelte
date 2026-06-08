@@ -13,6 +13,7 @@
 	import LandMap from './lib/LandMap.svelte';
 	import Sidebar from './lib/Sidebar.svelte';
 	import SyncSheet from './lib/SyncSheet.svelte';
+	import EnrollSheet from './lib/EnrollSheet.svelte';
 
 	let profiles = [];
 	let selectedId = '';
@@ -24,6 +25,7 @@
 
 	// sync sheet
 	let sheetOpen = false;
+	let enrollOpen = false;
 	let sheetDeviceFile = '';
 
 	let unsub = [];
@@ -116,6 +118,18 @@
 		}
 	}
 
+	async function doEnroll(link, deviceName, platform) {
+		enrollOpen = false;
+		lastError = '';
+		try {
+			await api.enroll(link, deviceName, platform);
+			await refreshProfiles();
+			cloud = await api.getCloudInfo();
+		} catch (e) {
+			lastError = String(e?.message || e);
+		}
+	}
+
 	async function syncNow() {
 		lastError = '';
 		try {
@@ -169,6 +183,7 @@
 		{agoLabel}
 		on:import={importProfile}
 		on:cloudSync={startCloudSync}
+		on:enroll={() => (enrollOpen = true)}
 		on:toggle={toggle}
 		on:syncNow={syncNow}
 		on:logout={logout}
@@ -185,6 +200,13 @@
 		deviceFile={sheetDeviceFile}
 		on:cancel={() => (sheetOpen = false)}
 		on:sync={(e) => doSync(e.detail.email, e.detail.password)}
+	/>
+{/if}
+
+{#if enrollOpen}
+	<EnrollSheet
+		on:cancel={() => (enrollOpen = false)}
+		on:enroll={(e) => doEnroll(e.detail.link, e.detail.deviceName, e.detail.platform)}
 	/>
 {/if}
 

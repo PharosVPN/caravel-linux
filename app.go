@@ -360,6 +360,23 @@ func (a *App) SyncFromController(deviceFile, email, password string) error {
 	return nil
 }
 
+// Enroll redeems a `pharosvpn://enroll?...` join link into a stored, ready
+// profile WITHOUT any passphrase — the device key is generated on-device and the
+// profile is sealed to it. Mirrors SyncFromController; there is no passphrase to
+// stash (re-sync is cert-based off the device leaf).
+func (a *App) Enroll(link, deviceName, platform string) error {
+	a.connecting.Store(true)
+	wruntime.EventsEmit(a.ctx, "state", TunnelState{Status: "connecting"})
+	defer func() { a.connecting.Store(false); wruntime.EventsEmit(a.ctx, "state", a.GetState()) }()
+
+	if _, err := a.runEnroll(link, deviceName, platform); err != nil {
+		return err
+	}
+	wruntime.EventsEmit(a.ctx, "profiles", a.ListProfiles())
+	wruntime.EventsEmit(a.ctx, "cloud", a.GetCloudInfo())
+	return nil
+}
+
 // SyncNow re-fetches the cloud bundle with the stored passphrase (one tap). With
 // none stored it returns ErrNeedsLogin so the frontend opens the login sheet.
 var ErrNeedsLogin = errors.New("needs-login")
@@ -539,6 +556,37 @@ func (a *App) runSync(deviceFile, email, password string) (string, error) {
 		return "", errors.New("sync failed: " + msg)
 	}
 	// Worker prints: synced "NAME" (rev N, …) — pull NAME out.
+	s := out.String()
+	if lo := strings.IndexByte(s, '"'); lo >= 0 {
+		if hi := strings.IndexByte(s[lo+1:], '"'); hi >= 0 {
+			return s[lo+1 : lo+1+hi], nil
+		}
+	}
+	return "", nil
+}
+
+// runEnroll shells out to `pharos-helper enroll <link>`, returning the stored
+// profile name. Enrollment needs no passphrase — the join link carries the
+// one-time ticket and the device key is generated on-device.
+func (a *App) runEnroll(link, deviceName, platform string) (string, error) {
+	args := []string{"enroll", link}
+	if deviceName != "" {
+		args = append(args, "--name", deviceName)
+	}
+	if platform != "" {
+		args = append(args, "--platform", platform)
+	}
+	cmd := exec.Command(a.bundledHelperPath(), args...)
+	var out, errBuf bytes.Buffer
+	cmd.Stdout, cmd.Stderr = &out, &errBuf
+	if err := cmd.Run(); err != nil {
+		msg := strings.TrimSpace(errBuf.String())
+		if msg == "" {
+			msg = err.Error()
+		}
+		return "", errors.New("enrollment failed: " + msg)
+	}
+	// Worker prints: enrolled "NAME" (rev N, …) — pull NAME out.
 	s := out.String()
 	if lo := strings.IndexByte(s, '"'); lo >= 0 {
 		if hi := strings.IndexByte(s[lo+1:], '"'); hi >= 0 {

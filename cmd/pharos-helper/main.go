@@ -56,6 +56,8 @@ func dispatch(args []string) error {
 		return cmdImport(args[1:])
 	case "sync":
 		return cmdSync(args[1:])
+	case "enroll":
+		return cmdEnroll(args[1:])
 	case "list", "ls":
 		return cmdList(args[1:])
 	case "profiles":
@@ -205,6 +207,58 @@ func cmdSync(args []string) error {
 		fmt.Printf("replaced %d previously-synced profile(s)\n", res.Replaced)
 	}
 	fmt.Printf("synced %q (rev %d, %d profile(s)) → %s\n", res.Name, res.Revision, len(res.Profiles), res.Path)
+	for _, pr := range res.Profiles {
+		fmt.Printf("  · %s (%s)\n", pr.Name, pr.Protocol)
+	}
+	return nil
+}
+
+// cmdEnroll redeems a `pharosvpn://enroll?...` join link into a stored, ready
+// profile WITHOUT any passphrase — the device key is generated on-device and the
+// profile is sealed to it. The GUI shells out to this (mirrors `sync`).
+func cmdEnroll(args []string) error {
+	var link, name, platform string
+	for i := 0; i < len(args); i++ {
+		a := args[i]
+		val := func() (string, error) {
+			if i+1 >= len(args) {
+				return "", fmt.Errorf("%s needs a value", a)
+			}
+			i++
+			return args[i], nil
+		}
+		var err error
+		switch {
+		case a == "--name":
+			name, err = val()
+		case a == "--platform":
+			platform, err = val()
+		case strings.HasPrefix(a, "--name="):
+			name = strings.TrimPrefix(a, "--name=")
+		case strings.HasPrefix(a, "--platform="):
+			platform = strings.TrimPrefix(a, "--platform=")
+		case !strings.HasPrefix(a, "-") && link == "":
+			link = a
+		default:
+			return fmt.Errorf("unexpected argument %q", a)
+		}
+		if err != nil {
+			return err
+		}
+	}
+	if link == "" {
+		return errors.New("usage: pharos-helper enroll <pharosvpn://enroll?...> [--name NAME] [--platform P]")
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), 45*time.Second)
+	defer cancel()
+	res, err := worker.Enroll(ctx, link, name, platform)
+	if err != nil {
+		return err
+	}
+	if res.Replaced > 0 {
+		fmt.Printf("replaced %d previously-synced profile(s)\n", res.Replaced)
+	}
+	fmt.Printf("enrolled %q (rev %d, %d profile(s)) → %s\n", res.Name, res.Revision, len(res.Profiles), res.Path)
 	for _, pr := range res.Profiles {
 		fmt.Printf("  · %s (%s)\n", pr.Name, pr.Protocol)
 	}

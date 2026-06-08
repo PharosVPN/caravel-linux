@@ -23,6 +23,7 @@ export const api = {
 	pickDeviceFile: () => App.PickDeviceFile(),
 	syncFromController: (deviceFile, email, password) =>
 		App.SyncFromController(deviceFile, email, password),
+	enroll: (link, deviceName, platform) => App.Enroll(link, deviceName, platform || 'linux'),
 	syncNow: () => App.SyncNow(),
 	logout: () => App.Logout(),
 	setDisabled: (bundle, disabled) => App.SetDisabled(bundle, disabled),

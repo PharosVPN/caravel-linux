@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/PharosVPN/caravel/core/deviceid"
+	"github.com/PharosVPN/caravel/core/enroll"
 	"github.com/PharosVPN/caravel/core/profile"
 	csync "github.com/PharosVPN/caravel/core/sync"
 )
@@ -109,6 +110,68 @@ func Sync(ctx context.Context, deviceFile, email, password, name string) (*SyncR
 	// re-import). `controller` ties it to this fleet.
 	marker, _ := json.Marshal(map[string]any{
 		"user": email, "revision": res.Revision,
+		"relay": bundle.RelayAddr, "controller": bundle.CAFingerprint,
+		"synced_at": time.Now().UTC().Format(time.RFC3339),
+	})
+	_ = os.WriteFile(filepath.Join(st.Dir(), name+".synced"), marker, 0o600)
+	_ = os.WriteFile(filepath.Join(st.Dir(), name+deviceid.Extension), data, 0o600)
+
+	out := &SyncResult{Name: name, Path: path, Revision: res.Revision, Replaced: replaced}
+	_ = json.Unmarshal(res.Plaintext, &out)
+	return out, nil
+}
+
+// Enroll redeems a `pharosvpn://enroll?...` join link into a stored, cloud-synced
+// profile WITHOUT any passphrase: it generates the device's keys on-device,
+// claims the one-time ticket through the relay, assembles the `.pharosid`, then
+// fetches + stores the per-device-sealed profile exactly like Sync (same markers,
+// same replace-all). Mirrors the caravel-mac `enroll` worker subcommand.
+func Enroll(ctx context.Context, link, deviceName, platform string) (*SyncResult, error) {
+	l, err := enroll.ParseLink(link)
+	if err != nil {
+		return nil, err
+	}
+	if deviceName == "" {
+		deviceName = "caravel-device"
+	}
+	if platform == "" {
+		platform = "linux"
+	}
+	bundle, err := enroll.Claim(ctx, l, deviceName, platform)
+	if err != nil {
+		return nil, err
+	}
+	data, err := bundle.Marshal()
+	if err != nil {
+		return nil, err
+	}
+
+	// Per-device sync: the bundle carries the device's own X25519 key, so Fetch
+	// opens the sealed profile with it — no email/passphrase.
+	res, err := csync.Fetch(ctx, bundle, "", "")
+	if err != nil {
+		return nil, err
+	}
+	env, err := profile.WrapPlaintext(res.Plaintext)
+	if err != nil {
+		return nil, err
+	}
+	name := deviceName
+	if bundle.Alias != "" {
+		name = bundle.Alias
+	}
+	name = syncProfileName(name)
+	st, err := OpenStore()
+	if err != nil {
+		return nil, err
+	}
+	replaced := PurgeCloudProfiles(st.Dir())
+	path, err := st.Import(name, env)
+	if err != nil {
+		return nil, err
+	}
+	marker, _ := json.Marshal(map[string]any{
+		"user": "", "revision": res.Revision,
 		"relay": bundle.RelayAddr, "controller": bundle.CAFingerprint,
 		"synced_at": time.Now().UTC().Format(time.RFC3339),
 	})
